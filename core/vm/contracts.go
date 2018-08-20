@@ -27,6 +27,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/bn256"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/crypto/ripemd160"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // PrecompiledContract is the basic interface for native Go contracts. The implementation
@@ -44,6 +45,9 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{2}): &sha256hash{},
 	common.BytesToAddress([]byte{3}): &ripemd160hash{},
 	common.BytesToAddress([]byte{4}): &dataCopy{},
+
+	//My Custom precompiled
+	common.BytesToAddress([]byte{100}): &helloPrecompiled{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -57,6 +61,9 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{6}): &bn256Add{},
 	common.BytesToAddress([]byte{7}): &bn256ScalarMul{},
 	common.BytesToAddress([]byte{8}): &bn256Pairing{},
+
+	//My Custom precompiled
+	common.BytesToAddress([]byte{100}): &helloPrecompiled{},
 }
 
 // RunPrecompiledContract runs and evaluates the output of a precompiled contract.
@@ -144,6 +151,21 @@ func (c *dataCopy) RequiredGas(input []byte) uint64 {
 }
 func (c *dataCopy) Run(in []byte) ([]byte, error) {
 	return in, nil
+}
+
+// helloPrecompiled implemented as a native contract.
+type helloPrecompiled struct{}
+
+// RequiredGas returns the gas required to execute the pre-compiled contract.
+//
+// This method does not require any overflow checking as the input size gas costs
+// required for anything significant is so high it's impossible to pay for.
+func (c *helloPrecompiled) RequiredGas(input []byte) uint64 {
+	return uint64(10 * len(input))
+}
+func (c *helloPrecompiled) Run(in []byte) ([]byte, error) {
+	log.Info("Hello " + string(in[:]))
+	return nil, nil
 }
 
 // bigModExp implements a native big integer exponential modular operation.
